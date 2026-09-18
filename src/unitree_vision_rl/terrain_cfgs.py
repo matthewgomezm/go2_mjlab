@@ -1,8 +1,5 @@
 from mjlab.terrains import TerrainGeneratorCfg
-from mjlab.terrains.config import ( pyramid_stairs, random_rough, flat,
-                                    pyramid_stairs_inv, hf_pyramid_slope,
-                                    hf_pyramid_slope_inv, wave_terrain, random_spread_boxes,
-                                    tilted_grid) 
+from mjlab.terrains.config import *
 
 # custom configs when adding new envs. can scale to any type and any difficulty.
 
@@ -64,3 +61,19 @@ def hard_terrains_cfg() -> TerrainGeneratorCfg:
                                    floor_depth=2),
     },
 )
+
+
+def hf_terrains_cfg() -> TerrainGeneratorCfg:
+    return TerrainGeneratorCfg(
+        size=(8.0, 8.0), border_width=20.0,
+        num_rows=15,            # difficulty resolution
+        num_cols=20,            # ignored when curriculum=True
+        curriculum=True,
+        difficulty_range=(0.0, 1.0),
+        add_lights=True,
+        sub_terrains= {
+            "perlin_noise" : perlin_noise(),
+            "discrete_obstacles": discrete_obstacles(),
+            "random_rough" : random_rough(),
+        },
+    )

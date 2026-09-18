@@ -19,14 +19,9 @@ from mjlab.tasks.velocity import mdp
 from mjlab.tasks.velocity.mdp import UniformVelocityCommandCfg
 from unitree_vision_rl.unitree_go2.tasks import create_velocity_env_cfg
 
-from unitree_vision_rl.terrain_cfgs import medium_terrains_cfg, hard_terrains_cfg
-from mjlab.terrains.config import ALL_TERRAINS_CFG, open_stairs, random_stairs
-
-from unitree_vision_rl.unitree_go2.unitree_go2 import (
-  FULL_COLLISION,
-  GO2_ACTION_SCALE,
-  get_go2_robot_cfg,
-)
+from unitree_vision_rl.terrain_cfgs import *
+from mjlab.terrains.config import *
+from unitree_vision_rl.unitree_go2.unitree_go2 import *
 
 
 # Go2 naming
@@ -326,6 +321,21 @@ def unitree_go2_all_terrain_env_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
   cfg = unitree_go2_rough_env_cfg(play=play)
 
   cfg.scene.terrain.terrain_generator = ALL_TERRAINS_CFG
+
+  if play:
+    tg = cfg.scene.terrain.terrain_generator
+    tg.curriculum = False
+    tg.num_cols = 5
+    tg.num_rows = 5
+    tg.border_width = 10.0
+    cfg.sim.nconmax = None
+
+  return cfg
+
+def unitree_go2_hf_terrain_env_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
+  cfg = unitree_go2_rough_env_cfg(play=play)
+
+  cfg.scene.terrain.terrain_generator = hf_terrains_cfg()
 
   if play:
     tg = cfg.scene.terrain.terrain_generator
