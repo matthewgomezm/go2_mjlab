@@ -1,8 +1,9 @@
 from mjlab.tasks.registry import register_mjlab_task
 from mjlab.tasks.velocity.rl import VelocityOnPolicyRunner
 
+from .algorithm.runner import Go2DistillationRunner
 from .env_cfgs import *
-from .rl_cfg import unitree_go2_ppo_runner_cfg
+from .rl_cfg import *
 
 
 def main() -> None:
@@ -72,4 +73,12 @@ register_mjlab_task(
   play_env_cfg=unitree_go2_hf_terrain_env_cfg(play=True),
   rl_cfg=unitree_go2_ppo_runner_cfg(),
   runner_cls=VelocityOnPolicyRunner,
+)
+
+register_mjlab_task(
+  task_id="Student-Phase",
+  env_cfg=unitree_go2_student_env_cfg(),
+  play_env_cfg=unitree_go2_student_env_cfg(play=True),
+  rl_cfg=unitree_go2_student_runner_cfg(),
+  runner_cls=Go2DistillationRunner,
 )

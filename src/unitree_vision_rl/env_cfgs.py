@@ -1,6 +1,7 @@
 """Unitree Go2 velocity environment configurations."""
 
 import math
+from copy import deepcopy
 from dataclasses import replace
 
 from mjlab.envs import ManagerBasedRlEnvCfg
@@ -14,7 +15,11 @@ from mjlab.sensor import (
   RayCastSensorCfg,
   RingPatternCfg,
   TerrainHeightSensorCfg,
+  CameraSensorCfg
 )
+from mjlab.managers.observation_manager import ObservationGroupCfg, ObservationTermCfg
+from mjlab.tasks.manipulation.mdp.observations import camera_depth
+
 from mjlab.tasks.velocity import mdp
 from mjlab.tasks.velocity.mdp import UniformVelocityCommandCfg
 from unitree_vision_rl.unitree_go2.tasks import create_velocity_env_cfg
@@ -345,4 +350,48 @@ def unitree_go2_hf_terrain_env_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
     tg.border_width = 10.0
     cfg.sim.nconmax = None
 
+  return cfg
+
+
+# adding camera & setting up CNN and RNN
+def unitree_go2_student_env_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
+  cfg = unitree_go2_rough_env_cfg(play=play)
+  cfg.scene.terrain.terrain_generator = medium_terrains_cfg()
+
+  # adding camera sensor to the tuple of sensors. wrapped existing from xml
+  cfg.scene.sensors = (cfg.scene.sensors or ()) + (
+    CameraSensorCfg(
+    name="zed_mini",
+    camera_name="robot/zedm",
+    data_types=("depth",),
+    width=64,
+    height=36,
+  ),
+)
+
+  actor_group = cfg.observations.pop("actor")
+  cfg.observations.pop("critic")
+  cfg.observations["teacher"] = actor_group
+  cfg.observations["student"] = deepcopy(actor_group)
+
+  del cfg.observations["student"].terms["height_scan"]
+  cfg.observations["camera"] = ObservationGroupCfg(
+    terms={
+      "depth": ObservationTermCfg(
+        func=camera_depth,
+        params={"sensor_name": "zed_mini", "cutoff_distance": 9.0},
+      ),
+    },
+    concatenate_terms=True,
+    enable_corruption=False,
+  )
+
+  if play:
+    tg = cfg.scene.terrain.terrain_generator
+    tg.curriculum = False
+    tg.num_cols = 5
+    tg.num_rows = 5
+    tg.border_width = 10.0
+    cfg.sim.nconmax = None
+  
   return cfg

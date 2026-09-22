@@ -82,7 +82,7 @@
         <mesh file="calf_mirror_0.obj"/>
         <mesh file="calf_mirror_1.obj"/>
         <mesh file="foot.obj"/>
-		<mesh name="zedm_mesh" file="zedmini_camera.obj" scale="0.001 0.001 0.001"/>
+		<!--mesh name="zedm_mesh" file="zedmini_camera.obj" scale="0.001 0.001 0.001"-->
 	</asset>
 
 	<worldbody>
@@ -99,9 +99,9 @@
 			<geom name="left_torso_collision" class="go2/collision/torso/left"/>
 			<geom name="right_torso_collision" class="go2/collision/torso/right"/>
 			<site name="imu" pos="-0.02557 0 0.04232"/>
-			<geom type="mesh" mesh="zedm_mesh"  euler="1.5708 0 0" contype="0" conaffinity="0" group="2" material="black"/>
-			<camera name="zedm"  pos="0.329 -0.043 0" xyaxes="0 -1 0 0.5 0 0.866" resolution="10 10" output="depth"/>
-			<site name="zedm_site" pos="0.329 0.023 0" xyaxes="0 -1 0 0.5 0 0.866"/>
+			<!--geom type="mesh" mesh="zedm_mesh"  euler="1.5708 0 0" contype="0" conaffinity="0" group="2" material="black"-->
+			<camera name="zedm"  pos="0.329 -0.043 0" xyaxes=" 0 -1 0 0.342020 0 0.939693" resolution="64 36" output="depth"/>
+			<!--site name="zedm_site" pos="0.329 0.023 0" xyaxes="0 -1 0 0.5 0 0.866"-->
 
 			<site name="vicon_marker" pos="0.22 0 0.095" material="black"/>
 			<body name="front_right_hip" pos="0.1934 -0.0465 0">
