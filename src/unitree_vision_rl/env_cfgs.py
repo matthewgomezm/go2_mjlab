@@ -18,6 +18,8 @@ from mjlab.sensor import (
   CameraSensorCfg
 )
 from mjlab.managers.observation_manager import ObservationGroupCfg, ObservationTermCfg
+from mjlab.managers.scene_entity_config import SceneEntityCfg
+from mjlab.envs.mdp import dr
 from mjlab.tasks.manipulation.mdp.observations import camera_depth
 
 from mjlab.tasks.velocity import mdp
@@ -366,6 +368,7 @@ def unitree_go2_student_env_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
     data_types=("depth",),
     width=64,
     height=36,
+    fovy=57.0,
   ),
 )
 
@@ -379,11 +382,73 @@ def unitree_go2_student_env_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
     terms={
       "depth": ObservationTermCfg(
         func=camera_depth,
-        params={"sensor_name": "zed_mini", "cutoff_distance": 9.0},
+        params={"sensor_name": "zed_mini", "cutoff_distance": 9.0, "min_depth": 0.1},
       ),
     },
     concatenate_terms=True,
     enable_corruption=False,
+  )
+
+  # body domain randomization, sampled once per env at startup
+  cfg.events["pd_gains"] = EventTermCfg(
+    func=dr.pd_gains,
+    mode="startup",
+    params={
+      "kp_range": (0.8, 1.2),
+      "kd_range": (0.8, 1.2),
+      "asset_cfg": SceneEntityCfg("robot"),
+      "operation": "scale",
+    },
+  )
+
+  cfg.events["joint_friction"] = EventTermCfg(
+    func=dr.joint_friction,
+    mode="startup",
+    params={
+      "ranges": (0.0, 0.4),
+      "asset_cfg": SceneEntityCfg("robot", joint_names=(".*",)),
+      "operation": "abs",
+    },
+  )
+
+  cfg.events["body_inertia"] = EventTermCfg(
+    func=dr.pseudo_inertia,
+    mode="startup",
+    params={
+      "alpha_range": (-0.05, 0.05),
+      "asset_cfg": SceneEntityCfg("robot", body_names=(".*",)),
+    },
+  )
+
+  # camera domain randomization
+  cfg.events["cam_pose"] = EventTermCfg(
+    func=dr.cam_pos,
+    mode="startup",
+    params={
+      "ranges": {0: (-0.005, 0.005), 1: (-0.005, 0.005), 2: (-0.005, 0.005)},
+      "asset_cfg": SceneEntityCfg("robot", camera_names="zedm"),
+      "operation": "add",
+    },
+  )
+
+  cfg.events["cam_orientation"] = EventTermCfg(
+    func=dr.cam_quat,
+    mode="startup",
+    params={
+      "roll_range": (-0.05, 0.05),
+      "pitch_range": (-0.05, 0.05),
+      "yaw_range": (-0.05, 0.05),
+      "asset_cfg": SceneEntityCfg("robot", camera_names="zedm"),
+    },
+  )
+  cfg.events["cam_fov"] = EventTermCfg(
+    func=dr.cam_fovy,
+    mode="startup",
+    params={
+      "ranges": (-2.0, 2.0),
+      "asset_cfg": SceneEntityCfg("robot", camera_names="zedm"),
+      "operation": "add",
+    },
   )
 
   if play:

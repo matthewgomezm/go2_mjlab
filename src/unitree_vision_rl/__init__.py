@@ -1,7 +1,7 @@
 from mjlab.tasks.registry import register_mjlab_task
 from mjlab.tasks.velocity.rl import VelocityOnPolicyRunner
 
-from .algorithm.runner import Go2DistillationRunner
+from .algorithm.distill_runner import Go2DistillationRunner
 from .env_cfgs import *
 from .rl_cfg import *
 
