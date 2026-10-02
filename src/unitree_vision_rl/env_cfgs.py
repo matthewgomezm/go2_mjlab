@@ -25,6 +25,7 @@ from mjlab.tasks.manipulation.mdp.observations import camera_depth
 from mjlab.tasks.velocity import mdp
 from mjlab.tasks.velocity.mdp import UniformVelocityCommandCfg
 from unitree_vision_rl.unitree_go2.tasks import create_velocity_env_cfg
+from unitree_vision_rl.unitree_go2.mdp import mdp as custom_mdp
 
 from unitree_vision_rl.terrain_cfgs import *
 from mjlab.terrains.config import *
@@ -450,6 +451,18 @@ def unitree_go2_student_env_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
       "operation": "add",
     },
   )
+
+  if not play:  # no depth noise when playing
+    cfg.events["cam_depth"] = EventTermCfg(
+      func=custom_mdp.cam_depth,
+      mode="reset",
+      params={
+        "sensor_name": "zed_mini",
+        "cutoff_distance": 9.0,
+        "noise_k": (0.0, 0.01),
+        "dropout_prob": (0.0, 0.03),
+      },
+    )
 
   if play:
     tg = cfg.scene.terrain.terrain_generator
