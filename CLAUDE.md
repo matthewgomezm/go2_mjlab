@@ -11,6 +11,7 @@ uv run train <TASK_ID> --env.scene.num-envs 4096 --agent.run-name <RUN_NAME>  # 
 uv run train <TASK_ID> --env.scene.num-envs 4096 --agent.run-name <RUN_NAME> --agent.teacher-checkpoint <TEACHER_CHECKPOINT>  # training command FOR STUDENT POLICIES
 uv run train <TASK_ID> --env.scene.num-envs 64 --agent.max_iterations 5   # SMOKE TEST; if told to run smoke test, run this command first.
 uv run play <TASK_ID> --wandb-run-path <entity/project/run_id> --viewer viser # (where wandb-run-path should be local, if not pull from wandb)
+uv run scripts/export.py --task-id <TASK-ID> --wandb-run-path <entity/project/run_id> --checkpoint-name <model_#.pt> --output-dir onnx/    # export policy to onnx
 
 ```
 - When launching the training command for student policies, add "student-x" where x is the number in succession of runs started. You may add any relevant, single words to the name as seen fit. 
