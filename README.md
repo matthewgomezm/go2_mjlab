@@ -1,2 +1,2 @@
-# Vision RL MJLab Implementation
-Branch using mjlab as the framework for vision DRL on the Unitree Go2. Continues work from previous branches.
+# Unitree Go2 Vision RL MJLab
+Branch using mjlab as the framework for vision DRL on the Unitree Go2. Main research framework/library. 
