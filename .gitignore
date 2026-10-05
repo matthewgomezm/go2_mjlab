@@ -9,6 +9,11 @@ __pycache__/
 # Pickle files
 *.pkl
 
+# mujoco log file
+MUJOCO_LOG.TXT
+
+**.code-workspace
+
 # Distribution / packaging
 .Python
 build/

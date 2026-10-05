@@ -1,6 +1,8 @@
 """Unitree Go2 velocity environment configurations."""
 
 import math
+from copy import deepcopy
+from dataclasses import replace
 
 from mjlab.envs import ManagerBasedRlEnvCfg
 from mjlab.envs.mdp.actions import JointPositionActionCfg
@@ -13,20 +15,22 @@ from mjlab.sensor import (
   RayCastSensorCfg,
   RingPatternCfg,
   TerrainHeightSensorCfg,
+  CameraSensorCfg
 )
+from mjlab.managers.observation_manager import ObservationGroupCfg, ObservationTermCfg
+from mjlab.managers.scene_entity_config import SceneEntityCfg
+from mjlab.envs.mdp import dr
+from mjlab.tasks.manipulation.mdp.observations import camera_depth
+
 from mjlab.tasks.velocity import mdp
 from mjlab.tasks.velocity.mdp import UniformVelocityCommandCfg
-from mjlab.tasks.velocity.velocity_env_cfg import make_velocity_env_cfg
+from unitree_vision_rl.unitree_go2.tasks import create_velocity_env_cfg
+from unitree_vision_rl.unitree_go2.mdp import mdp as custom_mdp
 
-from unitree_vision_rl.unitree_go2.unitree_go2 import (
-  FULL_COLLISION,
-  GO2_ACTION_SCALE,
-  get_go2_robot_cfg,
-)
-#from mjlab.terrains.config import (
-#    flat, pyramid_stairs, pyramid_stairs_inv, hf_pyramid_slope,
-#    hf_pyramid_slope_inv, random_rough, wave_terrain,
-#)
+from unitree_vision_rl.terrain_cfgs import *
+from mjlab.terrains.config import *
+from unitree_vision_rl.unitree_go2.unitree_go2 import *
+
 
 # Go2 naming
 BASE_BODY = "base_link"
@@ -38,9 +42,8 @@ FOOT_GEOMS = tuple(f"{leg}_foot_collision" for leg in LEGS)
 ##################
 # rough env config
 ##################
-
 def unitree_go2_rough_env_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
-  cfg = make_velocity_env_cfg()   # full config to track velo commands
+  cfg = create_velocity_env_cfg()   # full config to track velo commands
 
   cfg.sim.mujoco.ccd_iterations = 500
   cfg.sim.contact_sensor_maxmatch = 500
@@ -82,10 +85,10 @@ def unitree_go2_rough_env_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
       mode="geom",
       entity="robot",
       # All collision geoms...
-      pattern=r".*_collision$",
+      #pattern=r".*_collision$",
       # ...except the feet.
       exclude=FOOT_GEOMS,
-      #pattern=r"^(.*_torso|.*_hip|.*_thigh)_collision$",
+      pattern=r"^(.*_torso|.*_hip|.*_thigh)_collision$",
     ),
     secondary=ContactMatch(mode="body", pattern="terrain"),
     fields=("found",),
@@ -99,25 +102,7 @@ def unitree_go2_rough_env_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
 
   if cfg.scene.terrain is not None and cfg.scene.terrain.terrain_generator is not None:
     cfg.scene.terrain.terrain_generator.curriculum = True
-    # editing the specific proportions of the terrain generation
-    #tg = cfg.scene.terrain.terrain_generator
-    #tg.curriculum = True
-    #tg.sub_terrains = {
-    #    "flat": flat(proportion=0.1),
-    #    "pyramid_stairs": pyramid_stairs(
-    #        proportion=0.25, step_height_range=(0.0, 0.18), step_width=0.32
-    #    ),
-    #    "pyramid_stairs_inv": pyramid_stairs_inv(
-    #        proportion=0.25, step_height_range=(0.0, 0.18), step_width=0.32
-    #    ),
-    #    "hf_pyramid_slope": hf_pyramid_slope(proportion=0.1, slope_range=(0.0, 1.0)),
-    #    "hf_pyramid_slope_inv": hf_pyramid_slope_inv(
-    #        proportion=0.1, slope_range=(0.0, 1.0)
-    #    ),
-    #    "random_rough": random_rough(proportion=0.1, noise_range=(0.02, 0.16)),
-    #    "wave_terrain": wave_terrain(proportion=0.1, amplitude_range=(0.0, 0.3)),
-    #}
-    #cfg.scene.terrain.max_init_terrain_level = 3
+
 
   joint_pos_action = cfg.actions["joint_pos"]
   assert isinstance(joint_pos_action, JointPositionActionCfg)
@@ -162,7 +147,10 @@ def unitree_go2_rough_env_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
   cfg.rewards["air_time"].weight = 0.0
 
   # terminations
-  cfg.terminations.pop("fell_over", None)
+  cfg.terminations["fell_over"] = TerminationTermCfg(
+    func=mdp.bad_orientation,
+    params={"limit_angle": math.radians(70.0)},
+  )
   cfg.terminations["illegal_contact"] = TerminationTermCfg(
     func=mdp.illegal_contact,
     params={"sensor_name": nonfoot_ground_cfg.name},
@@ -189,6 +177,9 @@ def unitree_go2_rough_env_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
         cfg.scene.terrain.terrain_generator.num_cols = 5
         cfg.scene.terrain.terrain_generator.num_rows = 5
         cfg.scene.terrain.terrain_generator.border_width = 10.0
+        
+        # adding same seed when playing back to test perception vs blind
+        # cfg.scene.terrain.terrain_generator.seed = 40
 
   return cfg
 
@@ -196,7 +187,6 @@ def unitree_go2_rough_env_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
 ##################
 # flat env config
 ##################
-
 def unitree_go2_flat_env_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
   """Create Unitree Go2 flat terrain velocity configuration."""
   cfg = unitree_go2_rough_env_cfg(play=play)
@@ -235,4 +225,324 @@ def unitree_go2_flat_env_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
     twist_cmd.ranges.lin_vel_x = (-1.5, 2.0)
     twist_cmd.ranges.ang_vel_z = (-0.7, 0.7)
 
+  return cfg
+
+
+#######################
+# rough blind env config
+#######################
+def unitree_go2_rough_blind_env_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
+  cfg = unitree_go2_rough_env_cfg(play=play)
+
+  del cfg.observations["actor"].terms["height_scan"]
+  del cfg.observations["critic"].terms["height_scan"]
+
+  if play:
+    cfg.sim.nconmax = None
+
+    # adding same seed when playing back to test perception vs blind
+    # cfg.scene.terrain.terrain_generator.seed = 40
+
+  return cfg
+
+
+
+#######################
+# medium rough env config
+#######################
+def unitree_go2_rough_medium_env_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
+  cfg = unitree_go2_rough_env_cfg(play=play)
+
+  cfg.scene.terrain.terrain_generator = medium_terrains_cfg()
+
+  if play:
+    tg = cfg.scene.terrain.terrain_generator
+    tg.curriculum = False
+    tg.num_cols = 5
+    tg.num_rows = 5
+    tg.border_width = 10.0
+    cfg.sim.nconmax = None
+
+  return cfg
+
+
+def unitree_go2_finetune_env_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
+  cfg = unitree_go2_rough_env_cfg(play=play)
+
+  cfg.scene.terrain.terrain_generator = hard_terrains_cfg()
+
+  # cfg.rewards["air_time"].weight = 0.15
+  # cfg.rewards["body_ang_vel"].weight = -0.5
+  cfg.rewards["foot_clearance"].weight = -1.0
+  cfg.rewards["foot_swing_height"].weight = -0.05
+  
+  # body domain randomization, sampled once per env at startup
+  cfg.events["pd_gains"] = EventTermCfg(
+    func=dr.pd_gains,
+    mode="startup",
+    params={
+      "kp_range": (0.8, 1.2),
+      "kd_range": (0.8, 1.2),
+      "asset_cfg": SceneEntityCfg("robot"),
+      "operation": "scale",
+    },
+  )
+
+  cfg.events["joint_friction"] = EventTermCfg(
+    func=dr.joint_friction,
+    mode="startup",
+    params={
+      "ranges": (0.0, 0.4),
+      "asset_cfg": SceneEntityCfg("robot", joint_names=(".*",)),
+      "operation": "abs",
+    },
+  )
+
+  cfg.events["body_inertia"] = EventTermCfg(
+    func=dr.pseudo_inertia,
+    mode="startup",
+    params={
+      "alpha_range": (-0.05, 0.05),
+      "asset_cfg": SceneEntityCfg("robot", body_names=(".*",)),
+    },
+  )
+
+  # adding delay to the sensors
+  cfg.observations["actor"].terms["base_ang_vel"] = replace(
+    cfg.observations["actor"].terms["base_ang_vel"],
+    delay_min_lag=1, delay_max_lag=2, delay_hold_prob=0.8, delay_update_period=0)
+  
+  cfg.observations["actor"].terms["base_lin_vel"] = replace(
+    cfg.observations["actor"].terms["base_lin_vel"],
+    delay_min_lag=2, delay_max_lag=4, delay_hold_prob=0.8, delay_update_period=0)
+  
+  cfg.observations["actor"].terms["projected_gravity"] = replace(
+    cfg.observations["actor"].terms["projected_gravity"],
+    delay_min_lag=1, delay_max_lag=2, delay_hold_prob=0.8, delay_update_period=0)
+
+  cfg.observations["actor"].terms["joint_pos"] = replace(
+    cfg.observations["actor"].terms["joint_pos"],
+    delay_min_lag=0, delay_max_lag=1, delay_hold_prob=0.8, delay_update_period=0)
+  
+  cfg.observations["actor"].terms["joint_vel"] = replace(
+    cfg.observations["actor"].terms["joint_vel"],
+    delay_min_lag=0, delay_max_lag=1, delay_hold_prob=0.8, delay_update_period=0)
+  
+  if play:
+    tg = cfg.scene.terrain.terrain_generator
+    tg.curriculum = False
+    tg.num_cols = 5
+    tg.num_rows = 5
+    tg.border_width = 10.0
+    cfg.sim.nconmax = None
+
+  return cfg
+
+
+def unitree_go2_rough_medium_2_env_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
+  cfg = unitree_go2_rough_env_cfg(play=play)
+
+  cfg.scene.terrain.terrain_generator = medium_terrains_cfg()
+
+  cfg.scene.terrain.terrain_generator.sub_terrains["open_stairs"] = open_stairs(
+    proportion=0.20,
+    step_height_range=(0.04,0.2),
+    step_width_range=(0.82,0.37),
+    platform_width=1.9,
+    border_width=0.25,
+    step_thickness=0.05
+  )
+  
+  cfg.scene.terrain.terrain_generator.sub_terrains["open_stairs_inv"] = open_stairs(
+    proportion=0.20,
+    step_height_range=(0.04,0.2),
+    step_width_range=(0.82,0.37),
+    platform_width=1.9,
+    border_width=0.25,
+    step_thickness=0.05,
+    inverted = True
+)
+  
+  cfg.scene.terrain.terrain_generator.sub_terrains.pop("pyramid_stairs_inv")
+
+
+  if play:
+    tg = cfg.scene.terrain.terrain_generator
+    tg.curriculum = False
+    tg.num_cols = 5
+    tg.num_rows = 5
+    tg.border_width = 10.0
+    cfg.sim.nconmax = None
+
+  return cfg
+
+
+#######################
+# hard rough env config
+#######################
+def unitree_go2_rough_hard_env_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
+  cfg = unitree_go2_rough_env_cfg(play=play)
+
+  cfg.scene.terrain.terrain_generator = hard_terrains_cfg()
+
+  if play:
+    tg = cfg.scene.terrain.terrain_generator
+    tg.curriculum = False
+    tg.num_cols = 5
+    tg.num_rows = 5
+    tg.border_width = 10.0
+    cfg.sim.nconmax = None
+
+  return cfg
+
+#######################
+# all terrains testing
+#######################
+def unitree_go2_all_terrain_env_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
+  cfg = unitree_go2_rough_env_cfg(play=play)
+
+  cfg.scene.terrain.terrain_generator = ALL_TERRAINS_CFG
+
+  if play:
+    tg = cfg.scene.terrain.terrain_generator
+    tg.curriculum = False
+    tg.num_cols = 5
+    tg.num_rows = 5
+    tg.border_width = 10.0
+    cfg.sim.nconmax = None
+
+  return cfg
+
+def unitree_go2_hf_terrain_env_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
+  cfg = unitree_go2_rough_env_cfg(play=play)
+
+  cfg.scene.terrain.terrain_generator = hf_terrains_cfg()
+
+  if play:
+    tg = cfg.scene.terrain.terrain_generator
+    tg.curriculum = False
+    tg.num_cols = 5
+    tg.num_rows = 5
+    tg.border_width = 10.0
+    cfg.sim.nconmax = None
+
+  return cfg
+
+
+# adding camera & setting up CNN and RNN
+def unitree_go2_student_env_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
+  cfg = unitree_go2_rough_env_cfg(play=play)
+  cfg.scene.terrain.terrain_generator = medium_terrains_cfg()
+
+  # adding camera sensor to the tuple of sensors. wrapped existing from xml
+  cfg.scene.sensors = (cfg.scene.sensors or ()) + (
+    CameraSensorCfg(
+    name="zed_mini",
+    camera_name="robot/zedm",
+    data_types=("depth",),
+    width=64,
+    height=36,
+    fovy=57.0,
+  ),
+)
+
+  actor_group = cfg.observations.pop("actor")
+  cfg.observations.pop("critic")
+  cfg.observations["teacher"] = actor_group
+  cfg.observations["student"] = deepcopy(actor_group)
+
+  del cfg.observations["student"].terms["height_scan"]
+  cfg.observations["camera"] = ObservationGroupCfg(
+    terms={
+      "depth": ObservationTermCfg(
+        func=camera_depth,
+        params={"sensor_name": "zed_mini", "cutoff_distance": 9.0, "min_depth": 0.1},
+      ),
+    },
+    concatenate_terms=True,
+    enable_corruption=False,
+  )
+
+  # body domain randomization, sampled once per env at startup
+  cfg.events["pd_gains"] = EventTermCfg(
+    func=dr.pd_gains,
+    mode="startup",
+    params={
+      "kp_range": (0.8, 1.2),
+      "kd_range": (0.8, 1.2),
+      "asset_cfg": SceneEntityCfg("robot"),
+      "operation": "scale",
+    },
+  )
+
+  cfg.events["joint_friction"] = EventTermCfg(
+    func=dr.joint_friction,
+    mode="startup",
+    params={
+      "ranges": (0.0, 0.4),
+      "asset_cfg": SceneEntityCfg("robot", joint_names=(".*",)),
+      "operation": "abs",
+    },
+  )
+
+  cfg.events["body_inertia"] = EventTermCfg(
+    func=dr.pseudo_inertia,
+    mode="startup",
+    params={
+      "alpha_range": (-0.05, 0.05),
+      "asset_cfg": SceneEntityCfg("robot", body_names=(".*",)),
+    },
+  )
+
+  # camera domain randomization
+  cfg.events["cam_pose"] = EventTermCfg(
+    func=dr.cam_pos,
+    mode="startup",
+    params={
+      "ranges": {0: (-0.005, 0.005), 1: (-0.005, 0.005), 2: (-0.005, 0.005)},
+      "asset_cfg": SceneEntityCfg("robot", camera_names="zedm"),
+      "operation": "add",
+    },
+  )
+
+  cfg.events["cam_orientation"] = EventTermCfg(
+    func=dr.cam_quat,
+    mode="startup",
+    params={
+      "roll_range": (-0.05, 0.05),
+      "pitch_range": (-0.05, 0.05),
+      "yaw_range": (-0.05, 0.05),
+      "asset_cfg": SceneEntityCfg("robot", camera_names="zedm"),
+    },
+  )
+  cfg.events["cam_fov"] = EventTermCfg(
+    func=dr.cam_fovy,
+    mode="startup",
+    params={
+      "ranges": (-2.0, 2.0),
+      "asset_cfg": SceneEntityCfg("robot", camera_names="zedm"),
+      "operation": "add",
+    },
+  )
+
+  if not play:  # no depth noise when playing
+    cfg.events["cam_depth"] = EventTermCfg(
+      func=custom_mdp.cam_depth,
+      mode="reset",
+      params={
+        "sensor_name": "zed_mini",
+        "cutoff_distance": 9.0,
+        "noise_k": (0.0, 0.01),
+        "dropout_prob": (0.0, 0.03),
+      },
+    )
+
+  if play:
+    tg = cfg.scene.terrain.terrain_generator
+    tg.curriculum = False
+    tg.num_cols = 5
+    tg.num_rows = 5
+    tg.border_width = 10.0
+    cfg.sim.nconmax = None
+  
   return cfg
