@@ -82,3 +82,11 @@ register_mjlab_task(
   rl_cfg=unitree_go2_student_runner_cfg(),
   runner_cls=Go2DistillationRunner,
 )
+
+register_mjlab_task(
+  task_id="Finetune",
+  env_cfg=unitree_go2_finetune_env_cfg(),
+  play_env_cfg=unitree_go2_finetune_env_cfg(play=True),
+  rl_cfg=unitree_go2_ppo_runner_cfg(),
+  runner_cls=VelocityOnPolicyRunner,
+)

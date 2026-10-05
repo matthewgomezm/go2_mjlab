@@ -266,6 +266,79 @@ def unitree_go2_rough_medium_env_cfg(play: bool = False) -> ManagerBasedRlEnvCfg
   return cfg
 
 
+def unitree_go2_finetune_env_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
+  cfg = unitree_go2_rough_env_cfg(play=play)
+
+  cfg.scene.terrain.terrain_generator = hard_terrains_cfg()
+
+  # cfg.rewards["air_time"].weight = 0.15
+  # cfg.rewards["body_ang_vel"].weight = -0.5
+  cfg.rewards["foot_clearance"].weight = -1.0
+  cfg.rewards["foot_swing_height"].weight = -0.05
+  
+  # body domain randomization, sampled once per env at startup
+  cfg.events["pd_gains"] = EventTermCfg(
+    func=dr.pd_gains,
+    mode="startup",
+    params={
+      "kp_range": (0.8, 1.2),
+      "kd_range": (0.8, 1.2),
+      "asset_cfg": SceneEntityCfg("robot"),
+      "operation": "scale",
+    },
+  )
+
+  cfg.events["joint_friction"] = EventTermCfg(
+    func=dr.joint_friction,
+    mode="startup",
+    params={
+      "ranges": (0.0, 0.4),
+      "asset_cfg": SceneEntityCfg("robot", joint_names=(".*",)),
+      "operation": "abs",
+    },
+  )
+
+  cfg.events["body_inertia"] = EventTermCfg(
+    func=dr.pseudo_inertia,
+    mode="startup",
+    params={
+      "alpha_range": (-0.05, 0.05),
+      "asset_cfg": SceneEntityCfg("robot", body_names=(".*",)),
+    },
+  )
+
+  # adding delay to the sensors
+  cfg.observations["actor"].terms["base_ang_vel"] = replace(
+    cfg.observations["actor"].terms["base_ang_vel"],
+    delay_min_lag=1, delay_max_lag=2, delay_hold_prob=0.8, delay_update_period=0)
+  
+  cfg.observations["actor"].terms["base_lin_vel"] = replace(
+    cfg.observations["actor"].terms["base_lin_vel"],
+    delay_min_lag=2, delay_max_lag=4, delay_hold_prob=0.8, delay_update_period=0)
+  
+  cfg.observations["actor"].terms["projected_gravity"] = replace(
+    cfg.observations["actor"].terms["projected_gravity"],
+    delay_min_lag=1, delay_max_lag=2, delay_hold_prob=0.8, delay_update_period=0)
+
+  cfg.observations["actor"].terms["joint_pos"] = replace(
+    cfg.observations["actor"].terms["joint_pos"],
+    delay_min_lag=0, delay_max_lag=1, delay_hold_prob=0.8, delay_update_period=0)
+  
+  cfg.observations["actor"].terms["joint_vel"] = replace(
+    cfg.observations["actor"].terms["joint_vel"],
+    delay_min_lag=0, delay_max_lag=1, delay_hold_prob=0.8, delay_update_period=0)
+  
+  if play:
+    tg = cfg.scene.terrain.terrain_generator
+    tg.curriculum = False
+    tg.num_cols = 5
+    tg.num_rows = 5
+    tg.border_width = 10.0
+    cfg.sim.nconmax = None
+
+  return cfg
+
+
 def unitree_go2_rough_medium_2_env_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
   cfg = unitree_go2_rough_env_cfg(play=play)
 
