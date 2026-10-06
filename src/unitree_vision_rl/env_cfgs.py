@@ -452,6 +452,28 @@ def unitree_go2_student_env_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
   cfg.observations["student"] = deepcopy(actor_group)
 
   del cfg.observations["student"].terms["height_scan"]
+
+  # adding delay to the sensors
+  cfg.observations["student"].terms["base_ang_vel"] = replace(
+    cfg.observations["student"].terms["base_ang_vel"],
+    delay_min_lag=1, delay_max_lag=2, delay_hold_prob=0.8, delay_update_period=0)
+
+  cfg.observations["student"].terms["base_lin_vel"] = replace(
+    cfg.observations["student"].terms["base_lin_vel"],
+    delay_min_lag=2, delay_max_lag=4, delay_hold_prob=0.8, delay_update_period=0)
+
+  cfg.observations["student"].terms["projected_gravity"] = replace(
+    cfg.observations["student"].terms["projected_gravity"],
+    delay_min_lag=1, delay_max_lag=2, delay_hold_prob=0.8, delay_update_period=0)
+
+  cfg.observations["student"].terms["joint_pos"] = replace(
+    cfg.observations["student"].terms["joint_pos"],
+    delay_min_lag=0, delay_max_lag=1, delay_hold_prob=0.8, delay_update_period=0)
+
+  cfg.observations["student"].terms["joint_vel"] = replace(
+    cfg.observations["student"].terms["joint_vel"],
+    delay_min_lag=0, delay_max_lag=1, delay_hold_prob=0.8, delay_update_period=0)
+
   cfg.observations["camera"] = ObservationGroupCfg(
     terms={
       "depth": ObservationTermCfg(
