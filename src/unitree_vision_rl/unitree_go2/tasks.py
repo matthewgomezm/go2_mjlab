@@ -47,7 +47,7 @@ def create_velocity_env_cfg() -> ManagerBasedRlEnvCfg:
   )
 
   # terrain_scan.viz.show_rays=True
-  
+
   foot_height_scan = TerrainHeightSensorCfg(
     name="foot_height_scan",
     frame=(),  # Set per-robot: frame and pattern.

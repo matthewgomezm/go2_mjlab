@@ -1,8 +1,10 @@
 from dataclasses import dataclass
 
+
 @dataclass
 class RslRlDistillationAlgorithmCfg:
   """Config for the Distillation algorithm."""
+
   num_learning_epochs: int = 1
   """Number of learning epochs per update, run over the same rollout batch."""
   gradient_length: int = 15
@@ -23,4 +25,3 @@ class RslRlDistillationAlgorithmCfg:
   if it's set to anything else."""
   class_name: str = "Distillation"
   """Algorithm class name resolved by RSL-RL."""
-

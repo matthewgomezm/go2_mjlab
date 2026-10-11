@@ -35,5 +35,9 @@ def cam_depth(
     sensor._compute_data = noisy_compute
 
   ids = slice(None) if env_ids is None else env_ids
-  sensor._depth_noise_k[ids] = torch.empty_like(sensor._depth_noise_k[ids]).uniform_(*noise_k)
-  sensor._depth_dropout_p[ids] = torch.empty_like(sensor._depth_dropout_p[ids]).uniform_(*dropout_prob)
+  sensor._depth_noise_k[ids] = torch.empty_like(sensor._depth_noise_k[ids]).uniform_(
+    *noise_k
+  )
+  sensor._depth_dropout_p[ids] = torch.empty_like(
+    sensor._depth_dropout_p[ids]
+  ).uniform_(*dropout_prob)

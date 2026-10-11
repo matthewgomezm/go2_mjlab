@@ -23,3 +23,7 @@ unitree_vision_rl = "unitree_vision_rl"
 [build-system]
 requires = ["uv_build>=0.12.5,<0.13.0"]
 build-backend = "uv_build"
+
+[tool.ruff]
+indent-width = 2
+line-length = 88
