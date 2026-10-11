@@ -15,6 +15,7 @@ def get_spec() -> mujoco.MjSpec:
   spec = mujoco.MjSpec.from_file(str(GO2_XML))
   return spec
 
+
 # actuator config.
 STIFFNESS = 35.0  # kp
 DAMPING = 0.5  # kv
@@ -98,7 +99,8 @@ for _a in GO2_ARTICULATION.actuators:
 
 
 if __name__ == "__main__":
-  import mujoco.viewer as viewer
   from mjlab.entity.entity import Entity
+  from mujoco import viewer
+
   robot = Entity(get_go2_robot_cfg())
   viewer.launch(robot.spec.compile())

@@ -1,11 +1,14 @@
 from dataclasses import dataclass, field
+
 from mjlab.rl import RslRlBaseRunnerCfg, RslRlModelCfg
+
 from unitree_vision_rl.algorithm.distillation import RslRlDistillationAlgorithmCfg
 
 
 @dataclass
 class RslRlDistillationRunnerCfg(RslRlBaseRunnerCfg):
   """Config for the distillation runner"""
+
   class_name: str = "DistillationRunner"
   """The runner class name. Informational only."""
   student: RslRlModelCfg = field(default_factory=RslRlModelCfg)
@@ -13,7 +16,9 @@ class RslRlDistillationRunnerCfg(RslRlBaseRunnerCfg):
   teacher: RslRlModelCfg = field(default_factory=RslRlModelCfg)
   """The teacher model configuration. Must match the architecture of the checkpoint its
   weights will be loaded from."""
-  algorithm: RslRlDistillationAlgorithmCfg = field(default_factory=RslRlDistillationAlgorithmCfg)
+  algorithm: RslRlDistillationAlgorithmCfg = field(
+    default_factory=RslRlDistillationAlgorithmCfg
+  )
   """The algorithm configuration."""
   obs_groups: dict[str, tuple[str, ...]] = field(
     default_factory=lambda: {"student": ("student",), "teacher": ("teacher",)},

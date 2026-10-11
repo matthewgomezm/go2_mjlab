@@ -7,7 +7,6 @@ from pathlib import Path
 import torch
 import tyro
 import wandb
-
 from mjlab.envs import ManagerBasedRlEnv
 from mjlab.rl import MjlabOnPolicyRunner, RslRlVecEnvWrapper
 from mjlab.rl.exporter_utils import attach_metadata_to_onnx, get_base_metadata
@@ -31,7 +30,7 @@ def export_policy(cfg: ExportConfig) -> Path:
   env_cfg = load_env_cfg(cfg.task_id, play=True)
   agent_cfg = load_rl_cfg(cfg.task_id)
 
-  # env creation 
+  # env creation
   env = ManagerBasedRlEnv(cfg=env_cfg, device=device)
   env = RslRlVecEnvWrapper(env, clip_actions=agent_cfg.clip_actions)
 
@@ -44,7 +43,9 @@ def export_policy(cfg: ExportConfig) -> Path:
   with tempfile.TemporaryDirectory() as tmp_dir:
     run.file(cfg.checkpoint_name).download(root=tmp_dir, replace=True, exist_ok=True)
     checkpoint_path = Path(tmp_dir) / cfg.checkpoint_name
-    runner.load(str(checkpoint_path), load_cfg={"actor": True}, strict=True, map_location=device)
+    runner.load(
+      str(checkpoint_path), load_cfg={"actor": True}, strict=True, map_location=device
+    )
 
   output_dir = Path(cfg.output_dir)
   output_dir.mkdir(parents=True, exist_ok=True)

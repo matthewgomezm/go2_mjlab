@@ -1,10 +1,11 @@
-from rsl_rl.env import VecEnv
 from mjlab.rl import MjlabOnPolicyRunner
+from rsl_rl.env import VecEnv
 from rsl_rl.runners import DistillationRunner
 
 
 class Go2DistillationRunner(DistillationRunner, MjlabOnPolicyRunner):
   """Distillation runner."""
+
   def __init__(
     self,
     env: VecEnv,

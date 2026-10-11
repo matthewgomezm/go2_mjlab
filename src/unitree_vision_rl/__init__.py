@@ -9,6 +9,7 @@ from .rl_cfg import *
 def main() -> None:
   print("Hello from unitree-vision-rl!")
 
+
 ### tasks that build entire scene and environment for training
 
 register_mjlab_task(
