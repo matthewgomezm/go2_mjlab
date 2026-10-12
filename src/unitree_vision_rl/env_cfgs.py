@@ -452,6 +452,7 @@ def unitree_go2_student_env_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
   cfg.observations["student"] = deepcopy(actor_group)
 
   del cfg.observations["student"].terms["height_scan"]
+  del cfg.observations["student"].terms["base_lin_vel"]
 
   # adding delay to the sensors
   cfg.observations["student"].terms["base_ang_vel"] = replace(
