@@ -1,0 +1,18 @@
+# Allowlist: send only what the image builds from. Anything new in the repo (training outputs,
+# .env files with keys, scratch data) stays out of the build context unless listed here.
+*
+!pyproject.toml
+!uv.lock
+!README.md
+!src
+!scripts
+
+# Re-exclude junk inside the allowed dirs (src/unitree_vision_rl/logs and /wandb hold ~1 GB).
+**/__pycache__
+**/*.py[cod]
+**/logs
+**/wandb
+**/*.pt
+**/*.mp4
+**/MUJOCO_LOG.TXT
+**/.env*

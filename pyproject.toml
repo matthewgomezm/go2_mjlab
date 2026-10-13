@@ -11,8 +11,21 @@ dependencies = [
     "mjlab>=1.6.0",
     "onnx>=1.22.0",
     "onnxruntime>=1.30.0",
+    "torch",
+    "torchvision",
     "wandb>=0.22.3,<0.29",
 ]
+
+# PyPI's torch is the CUDA 13 build, which needs NVIDIA driver >= 580. The CUDA 12.9 build runs on
+# driver >= 525 (Blackwell >= 570), so the same lock works on nearly any cloud GPU image.
+[tool.uv.sources]
+torch = { index = "pytorch-cu129" }
+torchvision = { index = "pytorch-cu129" }
+
+[[tool.uv.index]]
+name = "pytorch-cu129"
+url = "https://download.pytorch.org/whl/cu129"
+explicit = true
 
 [project.scripts]
 unitree-vision-rl = "unitree_vision_rl:main"
