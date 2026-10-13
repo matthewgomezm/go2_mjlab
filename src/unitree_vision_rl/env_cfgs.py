@@ -228,6 +228,16 @@ def unitree_go2_flat_env_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
   return cfg
 
 
+# flat deploy TEST ONLY
+#def unitree_go2_flat_deploy_env_cfg(play: bool = False) -> ManagerBasedRlEnvCfg:
+#  cfg = unitree_go2_flat_env_cfg(play=play)
+
+  # No base linear velocity sensor on the real robot; critic keeps it as privileged info.
+#  del cfg.observations["actor"].terms["base_lin_vel"]
+
+#  return cfg
+
+
 #######################
 # rough blind env config
 #######################
