@@ -14,7 +14,6 @@ uv run play <TASK_ID> --wandb-run-path <entity/project/run_id> --viewer viser # 
 uv run scripts/export.py --task-id <TASK-ID> --wandb-run-path <entity/project/run_id> --checkpoint-name <model_#.pt> --output-dir onnx/    # export policy to onnx
 uv format                                           # format code (Ruff formatter)
 uvx ruff check --fix                                # lint + autofix (import sorting, etc.)
-uvx pre-commit install                              # once per clone: runs ruff check --fix + ruff format on every commit
 
 ```
 - When launching the training command for student policies, add "student-x" where x is the number in succession of runs started. You may add any relevant, single words to the name as seen fit. 
@@ -47,4 +46,3 @@ Training is a two-phase teacher/student pipeline:
 - Camera domain randomization (`dr.cam_*`) references camera name `"zedm"` while the sensor refers to `"robot/zedm"` – keep both consistent with the XML.
 - `RslRlDistillationAlgorithmCfg` carries unused `rnd_cfg`/`symmetry_cfg` fields because rsl_rl's `OnPolicyRunner.learn()` reads them regardless of algorithm.
 - Code style: 2-space indentation throughout, 88-char lines, enforced by Ruff via `[tool.ruff]` in `pyproject.toml`. Don't run Ruff with a config that drops `indent-width = 2`, or it will reindent everything to 4 spaces.
-- **Formatting/CI**: after editing Python files, run `uv format` and `uvx ruff check --fix`, then fix anything left by hand. `.github/workflows/lint.yml` runs `uv format --check` and `ruff check` on pushes to `main` and on PRs, and fails if either reports issues. Formatting changes layout only; `ruff check --fix` can reorder imports, so watch the `*` imports in `env_cfgs.py`, where import order decides which duplicate name wins.
