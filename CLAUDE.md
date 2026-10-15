@@ -19,6 +19,7 @@ uvx ruff check --fix                                # lint + autofix (import sor
 - When launching the training command for student policies, add "student-x" where x is the number in succession of runs started. You may add any relevant, single words to the name as seen fit. 
 - When launching the training command for teacher policies, ask me which teacher checkpoint to select. Follow student policy guidelines as well. 
 - If 4096 envs causes out-of-memory issues at runtime, re run the same command with 2048 envs.
+- If on RTX 6000 Ada, envs > 4096 are likely very viable.
 
 The package registers itself via the `mjlab.tasks` entry point (`pyproject.toml`), so mjlab's own CLI discovers the tasks. Typical usage (check `uv run train --help` for current flags in the installed mjlab version).
 
