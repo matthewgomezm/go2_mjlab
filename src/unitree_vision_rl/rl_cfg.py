@@ -67,9 +67,10 @@ def unitree_go2_student_runner_cfg() -> RslRlDistillationRunnerCfg:
       obs_normalization=True,
       cnn_cfg=CNN_CFG,
       class_name="CNNModel",
+      # rollout noise only; distillation never trains std. ~teacher's final PPO std
       distribution_cfg={
         "class_name": "GaussianDistribution",
-        "init_std": 1.0,
+        "init_std": 0.5,
         "std_type": "scalar",
       },
     ),
@@ -114,9 +115,10 @@ def unitree_go2_RNN_student_runner_cfg() -> RslRlDistillationRunnerCfg:
       obs_normalization = True,
       cnn_cfg = CNN_CFG,
       class_name = "unitree_vision_rl.algorithm.models:CNNRNNModel",
+      # rollout noise only; distillation never trains std. ~teacher's final PPO std
       distribution_cfg={
         "class_name": "GaussianDistribution",
-        "init_std": 1.0,
+        "init_std": 0.5,
         "std_type": "scalar",
       },
       rnn_type = "lstm",

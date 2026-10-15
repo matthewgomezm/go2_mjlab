@@ -5,6 +5,18 @@ from mjlab.envs.manager_based_rl_env import ManagerBasedRlEnv
 from mjlab.sensor import CameraSensor
 
 
+def camera_depth_no_hit_far(
+  env: ManagerBasedRlEnv,
+  sensor_name: str,
+  cutoff_distance: float,
+  min_depth: float = 0.1,
+) -> torch.Tensor:
+  sensor: CameraSensor = env.scene[sensor_name]
+  depth = sensor.data.depth.permute(0, 3, 1, 2)  # (B, 1, H, W), 0 where no hit
+  depth = torch.where(depth > 0.0, depth, cutoff_distance)
+  return torch.clamp(depth, min=min_depth, max=cutoff_distance) / cutoff_distance
+
+
 def cam_depth(
   env: ManagerBasedRlEnv,
   env_ids: torch.Tensor | None,

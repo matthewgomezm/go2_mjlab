@@ -52,13 +52,6 @@ register_mjlab_task(
   runner_cls=VelocityOnPolicyRunner,
 )
 
-register_mjlab_task(
-  task_id="Velocity-Rough-Medium-2-Unitree-Go2",
-  env_cfg=unitree_go2_rough_medium_2_env_cfg(),
-  play_env_cfg=unitree_go2_rough_medium_2_env_cfg(play=True),
-  rl_cfg=unitree_go2_ppo_runner_cfg(),
-  runner_cls=VelocityOnPolicyRunner,
-)
 
 register_mjlab_task(
   task_id="All-Terrains-Test-Unitree-Go2",
@@ -68,13 +61,6 @@ register_mjlab_task(
   runner_cls=VelocityOnPolicyRunner,
 )
 
-register_mjlab_task(
-  task_id="HF-Terrains-Test-Unitree-Go2",
-  env_cfg=unitree_go2_hf_terrain_env_cfg(),
-  play_env_cfg=unitree_go2_hf_terrain_env_cfg(play=True),
-  rl_cfg=unitree_go2_ppo_runner_cfg(),
-  runner_cls=VelocityOnPolicyRunner,
-)
 
 register_mjlab_task(
   task_id="Student-Phase",
@@ -87,6 +73,38 @@ register_mjlab_task(
   task_id="Student-RNN-Phase",
   env_cfg=unitree_go2_student_env_cfg(),
   play_env_cfg=unitree_go2_student_env_cfg(play=True),
+  rl_cfg=unitree_go2_RNN_student_runner_cfg(),
+  runner_cls=Go2DistillationRunner,
+)
+
+# same students, depth camera matched to the ZED Mini (FOV, 2 m clip, latency)
+register_mjlab_task(
+  task_id="Student-Zedm-Phase",
+  env_cfg=unitree_go2_student_zedm_env_cfg(),
+  play_env_cfg=unitree_go2_student_zedm_env_cfg(play=True),
+  rl_cfg=unitree_go2_student_runner_cfg(),
+  runner_cls=Go2DistillationRunner,
+)
+register_mjlab_task(
+  task_id="Student-RNN-Zedm-Phase",
+  env_cfg=unitree_go2_student_zedm_env_cfg(),
+  play_env_cfg=unitree_go2_student_zedm_env_cfg(play=True),
+  rl_cfg=unitree_go2_RNN_student_runner_cfg(),
+  runner_cls=Go2DistillationRunner,
+)
+
+# same students, depth camera matched to the RealSense D435
+register_mjlab_task(
+  task_id="Student-D435-Phase",
+  env_cfg=unitree_go2_student_d435_env_cfg(),
+  play_env_cfg=unitree_go2_student_d435_env_cfg(play=True),
+  rl_cfg=unitree_go2_student_runner_cfg(),
+  runner_cls=Go2DistillationRunner,
+)
+register_mjlab_task(
+  task_id="Student-RNN-D435-Phase",
+  env_cfg=unitree_go2_student_d435_env_cfg(),
+  play_env_cfg=unitree_go2_student_d435_env_cfg(play=True),
   rl_cfg=unitree_go2_RNN_student_runner_cfg(),
   runner_cls=Go2DistillationRunner,
 )
