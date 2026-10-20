@@ -104,6 +104,7 @@
 			<!--site name="zedm_site" pos="0.329 0.023 0" xyaxes="0 -1 0 0.5 0 0.866"-->
 			<camera name="d435"  pos="0.30 0 0.12" xyaxes=" 0 -1 0 0.342020 0 0.939693" resolution="64 36" output="depth"/>
 
+			<site name="front_scan" pos="0.6 0 0" group="5"/>
 			<site name="vicon_marker" pos="0.22 0 0.095" material="black"/>
 			<body name="front_right_hip" pos="0.1934 -0.0465 0">
 				<inertial pos="-0.0054 -0.00194 -0.000105" quat="0.498237 0.505462 0.499245 0.497014"

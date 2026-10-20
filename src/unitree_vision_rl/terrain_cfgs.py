@@ -34,7 +34,8 @@ def medium_terrains_cfg() -> TerrainGeneratorCfg:
   )
 
 
-def hard_terrains_cfg() -> TerrainGeneratorCfg:
+# general traversal set for teachers
+def teacher_terrains_cfg() -> TerrainGeneratorCfg:
   return TerrainGeneratorCfg(
     size=(8.0, 8.0),
     border_width=20.0,
@@ -44,27 +45,38 @@ def hard_terrains_cfg() -> TerrainGeneratorCfg:
     difficulty_range=(0.0, 1.0),
     add_lights=True,
     sub_terrains={
+      "flat": flat(proportion=0.05),
       "pyramid_stairs": pyramid_stairs(
-        proportion=0.20, step_height_range=(0.0, 0.24), step_width=0.32
+        proportion=0.15, step_height_range=(0.0, 0.20), step_width=0.32
       ),
       "pyramid_stairs_inv": pyramid_stairs_inv(
-        proportion=0.20, step_height_range=(0.0, 0.24), step_width=0.32
+        proportion=0.15, step_height_range=(0.0, 0.20), step_width=0.32
       ),
+      "hf_pyramid_slope": hf_pyramid_slope(proportion=0.10, slope_range=(0.0, 0.5)),
+      "hf_pyramid_slope_inv": hf_pyramid_slope_inv(
+        proportion=0.10, slope_range=(0.0, 0.5)
+      ),
+      # flat at difficulty 0, up to 8 cm bumps at 1
+      "random_rough": random_rough(
+        proportion=0.20, noise_range=(0.02, 0.08), scale_with_difficulty=True
+      ),
+      "wave_terrain": wave_terrain(proportion=0.05, amplitude_range=(0.0, 0.15)),
       "random_spread_boxes": random_spread_boxes(
-        proportion=0.20,
+        proportion=0.15,
         num_boxes=80,
-        box_width_range=(0.1, 1.0),
-        box_length_range=(0.05, 2.0),
+        box_width_range=(0.1, 0.84),
+        box_length_range=(0.05, 1.0),
+        box_height_range=(0.05, 0.2),
         box_yaw_range=(0.0, 360.0),
         add_floor=True,
         platform_width=1,
         border_width=0.25,
       ),
       "tilted_grid": tilted_grid(
-        proportion=0.15,
+        proportion=0.05,
         grid_width=1,
-        tilt_range_deg=20,
-        height_range=0.3,
+        tilt_range_deg=12,
+        height_range=0.15,
         floor_depth=2,
       ),
     },
