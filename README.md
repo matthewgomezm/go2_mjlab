@@ -1,7 +1,7 @@
 # Unitree Go2 Vision RL MJLab
 ![GitHub commit activity](https://img.shields.io/github/commit-activity/w/matthewgomezm/go2_mjlab?style=for-the-badge&logo=probot&logoSize=auto)
 
-Repository training the Unitree Go2 locomotion tasks across rough and uneven terrain using depth camera information.
+Repository training the Unitree Go2 end-to-end locomotion tasks across rough and uneven terrain using depth camera information.
 
 # How-To
 ### Prerequisites
